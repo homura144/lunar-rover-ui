@@ -6,12 +6,12 @@ Chart.register(...registerables)
 Chart.defaults.font.size = 18
 
 // Drawing charts
-const chartRef = ref<HTMLCanvasElement | null>(null)
+const shakeChartRef = ref<HTMLCanvasElement | null>(null)
 const heightChartRef = ref<HTMLCanvasElement | null>(null)
 
 onMounted(() => {
-  if (chartRef.value) {
-    new Chart(chartRef.value, {
+  if (shakeChartRef.value) {
+    new Chart(shakeChartRef.value, {
       type: 'line',
       data: {
         labels: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5],
@@ -106,7 +106,7 @@ onMounted(() => {
     <!-- charts -->
     <div class="charts">
       <div>
-        <canvas ref="chartRef"></canvas>
+        <canvas ref="shakeChartRef"></canvas>
       </div>
       <div>
         <canvas ref="heightChartRef"></canvas>
