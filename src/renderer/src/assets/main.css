@@ -5,7 +5,6 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background-image: url('./wavy-lines.svg');
   background-size: cover;
   user-select: none;
 }
@@ -168,4 +167,56 @@ code {
   .actions {
     display: none;
   }
+}
+
+.container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+/* Chart styles */
+.charts {
+  width: 100%;
+  height: 70%;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.charts > div {
+  width: 45%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.terrain {
+  width: 100%;
+  height: 10%;
+  display: flex;
+}
+
+/* Each label area */
+.terrain-area {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2em;
+  font-weight: bold;
+  text-align: center;
+}
+
+.flat {
+  background-color: #d3c1e5;
+  color: #4a2e83;
+}
+
+.bump {
+  background-color: #805e9e;
+  color: white;
 }
