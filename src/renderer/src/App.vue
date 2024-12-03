@@ -88,6 +88,7 @@ onMounted(() => {
             }
           },
           y: {
+            position: 'right',
             title: {
               display: true,
               text: '高度/m'
