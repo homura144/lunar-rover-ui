@@ -5,35 +5,59 @@ Chart.register(...registerables)
 
 Chart.defaults.font.size = 18
 
-// Drawing charts
 const shakeChartRef = ref<HTMLCanvasElement | null>(null)
 const heightChartRef = ref<HTMLCanvasElement | null>(null)
 
+const distance = ref(0)
+
+let shakeChart: Chart | null = null
+let heightChart: Chart | null = null
+
+// Initial shake chart
+let shakeData = {
+  datasets: [
+    {
+      label: '六轮车',
+      borderColor: '#5c458d',
+      backgroundColor: '#5c458d',
+      pointStyle: 'circle',
+      tension: 0.4
+    },
+    {
+      label: '四轮车',
+      borderColor: '#e6b422',
+      backgroundColor: '#e6b422',
+      pointStyle: 'circle',
+      tension: 0.4
+    }
+  ]
+}
+
+// Initial height chart
+let heightData = {
+  datasets: [
+    {
+      label: '六轮车',
+      borderColor: '#5c458d',
+      backgroundColor: '#5c458d',
+      pointStyle: 'circle',
+      tension: 0.4
+    },
+    {
+      label: '四轮车',
+      borderColor: '#e6b422',
+      backgroundColor: '#e6b422',
+      pointStyle: 'circle',
+      tension: 0.4
+    }
+  ]
+}
+
 onMounted(() => {
   if (shakeChartRef.value) {
-    new Chart(shakeChartRef.value, {
+    shakeChart = new Chart(shakeChartRef.value, {
       type: 'line',
-      data: {
-        labels: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5],
-        datasets: [
-          {
-            label: '六轮车',
-            data: [0, 1, 2, 3, 4, 5, 4, 3, 2, 4, 5, 3, 2, 1, 0, 0],
-            borderColor: '#5c458d',
-            backgroundColor: '#5c458d',
-            pointStyle: 'circle',
-            tension: 0.4
-          },
-          {
-            label: '四轮车',
-            data: [0, 2, 5, 8, 10, 12, 10, 8, 6, 8, 9, 7, 6, 4, 1, 0],
-            borderColor: '#e6b422',
-            backgroundColor: '#e6b422',
-            pointStyle: 'circle',
-            tension: 0.4
-          }
-        ]
-      },
+      data: shakeData,
       options: {
         maintainAspectRatio: false,
         scales: {
@@ -41,12 +65,23 @@ onMounted(() => {
             title: {
               display: true,
               text: '行驶距离/m'
+            },
+            type: 'linear',
+            min: 0,
+            max: 1.5,
+            ticks: {
+              stepSize: 0.3,
             }
           },
           y: {
             title: {
               display: true,
               text: '摇晃程度'
+            },
+            min: 0,
+            max: 15,
+            ticks: {
+              stepSize: 3,
             }
           }
         }
@@ -55,29 +90,9 @@ onMounted(() => {
   }
 
   if (heightChartRef.value) {
-    new Chart(heightChartRef.value, {
+    heightChart = new Chart(heightChartRef.value, {
       type: 'line',
-      data: {
-        labels: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5],
-        datasets: [
-          {
-            label: '六轮车',
-            data: [0, 1, 1.5, 2, 2.5, 3, 2.8, 2.5, 2, 1.8, 1.5, 1.2, 1, 0.8, 0.5, 0],
-            borderColor: '#5c458d',
-            backgroundColor: '#5c458d',
-            pointStyle: 'circle',
-            tension: 0.4
-          },
-          {
-            label: '四轮车',
-            data: [0, 2, 2.5, 3, 3.5, 4, 3.8, 3.5, 3, 2.8, 2.5, 2.2, 2, 1.8, 1.5, 1],
-            borderColor: '#e6b422',
-            backgroundColor: '#e6b422',
-            pointStyle: 'circle',
-            tension: 0.4
-          }
-        ]
-      },
+      data: heightData,
       options: {
         maintainAspectRatio: false,
         scales: {
@@ -85,6 +100,12 @@ onMounted(() => {
             title: {
               display: true,
               text: '行驶距离/m'
+            },
+            type: 'linear',
+            min: 0,
+            max: 1.5,
+            ticks: {
+              stepSize: 0.3,
             }
           },
           y: {
@@ -92,13 +113,56 @@ onMounted(() => {
             title: {
               display: true,
               text: '高度/m'
+            },
+            min: 0,
+            max: 0.5,
+            ticks: {
+              stepSize: 0.1,
             }
           }
         }
       }
     })
   }
+
+
+  // update the distance periodically
+  setInterval(() => {
+    // TODO: get distance from the motor
+    distance.value += 0.1
+  }, 1000)
+
+  // update the shakeChart 
+  setInterval(() => {
+    // add label
+    const newLabel: Number = distance.value.toFixed(2);
+
+    // add shake data periodically
+    // TODO: get shake data from the IMU
+    shakeData.labels.push(Number(newLabel));
+    shakeData.datasets[0].data.push(Math.random() * 15);
+    shakeData.datasets[1].data.push(Math.random() * 15);
+
+    // Update the charts
+    if (shakeChart) shakeChart.update();
+  }, 1000);
+
+  // update the heightChart 
+  setInterval(() => {
+    // add label
+    const newLabel: Number = distance.value.toFixed(2);
+
+    // add height data periodically
+    // TODO: get height data from the grating scale
+    heightData.labels.push(Number(newLabel));
+    heightData.datasets[0].data.push(Math.random() * 0.5);
+    heightData.datasets[1].data.push(Math.random() * 0.5);
+
+    // Update the charts
+    if (heightChart) heightChart.update();
+  }, 1000);
 })
+
 </script>
 
 <template>
