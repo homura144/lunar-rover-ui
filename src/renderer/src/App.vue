@@ -57,6 +57,48 @@ let heightData = {
   ]
 }
 
+const isRunning = ref(false)
+let distanceInterval: number | undefined
+let shakeChartInterval: number | undefined
+let heightChartInterval: number | undefined
+let roverPositionInterval: number | undefined
+
+const start = () => {
+  if (!isRunning.value) {
+    isRunning.value = true
+    distanceInterval = setInterval(() => {
+      distance.value += 0.01
+    }, 100)
+    shakeChartInterval = setInterval(() => {
+      const newLabel: Number = distance.value.toFixed(2)
+      shakeData.labels.push(Number(newLabel))
+      shakeData.datasets[0].data.push(Math.random() * shake_max / 3)
+      shakeData.datasets[1].data.push(Math.random() * shake_max)
+      if (shakeChart) shakeChart.update()
+    }, 100)
+    heightChartInterval = setInterval(() => {
+      const newLabel: Number = distance.value.toFixed(2)
+      heightData.labels.push(Number(newLabel))
+      heightData.datasets[0].data.push(Math.random() * height_max / 3)
+      heightData.datasets[1].data.push(Math.random() * height_max)
+      if (heightChart) heightChart.update()
+    }, 100)
+    roverPositionInterval = setInterval(() => {
+      roverPosition.value = distance.value / distance_max * 100
+    }, 100)
+  }
+}
+
+const pause = () => {
+  if (isRunning.value) {
+    isRunning.value = false
+    clearInterval(distanceInterval)
+    clearInterval(shakeChartInterval)
+    clearInterval(heightChartInterval)
+    clearInterval(roverPositionInterval)
+  }
+}
+
 onMounted(() => {
   if (shakeChartRef.value) {
     shakeChart = new Chart(shakeChartRef.value, {
@@ -128,48 +170,6 @@ onMounted(() => {
       }
     })
   }
-
-
-  // update the distance periodically
-  setInterval(() => {
-    // TODO: get distance from the motor
-    distance.value += 0.01;
-  }, 100);
-
-  // update the shakeChart 
-  setInterval(() => {
-    // add label
-    const newLabel: Number = distance.value.toFixed(2);
-
-    // add shake data periodically
-    // TODO: get shake data from the IMU
-    shakeData.labels.push(Number(newLabel));
-    shakeData.datasets[0].data.push(Math.random() * shake_max / 3);
-    shakeData.datasets[1].data.push(Math.random() * shake_max);
-
-    // Update the charts
-    if (shakeChart) shakeChart.update();
-  }, 100);
-
-  // update the heightChart 
-  setInterval(() => {
-    // add label
-    const newLabel: Number = distance.value.toFixed(2);
-
-    // add height data periodically
-    // TODO: get height data from the grating scale
-    heightData.labels.push(Number(newLabel));
-    heightData.datasets[0].data.push(Math.random() * height_max / 3);
-    heightData.datasets[1].data.push(Math.random() * height_max);
-
-    // Update the charts
-    if (heightChart) heightChart.update();
-  }, 100);
-
-  // update the rover position periodically
-  setInterval(() => {
-    roverPosition.value = distance.value / distance_max * 100;
-  }, 100);
 })
 
 </script>
@@ -197,6 +197,12 @@ onMounted(() => {
         <div class="terrain-area bump" style="flex: 4">起伏区域</div>
         <div class="terrain-area flat" style="flex: 1">平坦区域</div>
       </div>
+    </div>
+
+    <!-- control buttons -->
+    <div class="control-button">
+      <button class="start" @click="start">开始</button>
+      <button class="pause" @click="pause">暂停</button>
     </div>
   </div>
 </template>
