@@ -17,51 +17,59 @@ const height_max = 0.5
 let shakeChart: Chart | null = null
 let heightChart: Chart | null = null
 
+const ID_SIX_WHEELER = 0
+const ID_FOUR_WHEELER = 1
+
 // Initial shake chart
 let shakeData = {
+  labels: [] as number[],
   datasets: [
     {
       label: '六轮车',
       borderColor: '#5c458d',
       backgroundColor: '#5c458d',
       tension: 0.4,
-      pointRadius: 0
+      pointRadius: 0,
+      data: [] as number[]
     },
     {
       label: '四轮车',
       borderColor: '#e6b422',
       backgroundColor: '#e6b422',
       tension: 0.4,
-      pointRadius: 0
+      pointRadius: 0,
+      data: [] as number[]
     }
   ]
 }
 
-// Initial height chart
 let heightData = {
+  labels: [] as number[],
   datasets: [
     {
       label: '六轮车',
       borderColor: '#5c458d',
       backgroundColor: '#5c458d',
       tension: 0.4,
-      pointRadius: 0
+      pointRadius: 0,
+      data: [] as number[]
     },
     {
       label: '四轮车',
       borderColor: '#e6b422',
       backgroundColor: '#e6b422',
       tension: 0.4,
-      pointRadius: 0
+      pointRadius: 0,
+      data: [] as number[]
     }
   ]
 }
 
 const isRunning = ref(false)
-let distanceInterval: number | undefined
-let shakeChartInterval: number | undefined
-let heightChartInterval: number | undefined
-let roverPositionInterval: number | undefined
+let distanceInterval: ReturnType<typeof setInterval> | undefined
+let shakeChartInterval: ReturnType<typeof setInterval> | undefined
+let heightChartInterval: ReturnType<typeof setInterval> | undefined
+let roverPositionInterval: ReturnType<typeof setInterval> | undefined
 
 const start = () => {
   if (!isRunning.value) {
@@ -70,17 +78,26 @@ const start = () => {
       distance.value += 0.01
     }, 100)
     shakeChartInterval = setInterval(() => {
-      const newLabel: Number = distance.value.toFixed(2)
+      const newLabel: number = Number(distance.value.toFixed(2))
       shakeData.labels.push(Number(newLabel))
-      shakeData.datasets[0].data.push(Math.random() * shake_max / 3)
-      shakeData.datasets[1].data.push(Math.random() * shake_max)
+
+      if (shakeData.datasets[ID_SIX_WHEELER].data) {
+        shakeData.datasets[ID_SIX_WHEELER].data.push(Math.random() * shake_max / 3)
+      }
+      if (shakeData.datasets[ID_FOUR_WHEELER].data) {
+        shakeData.datasets[ID_FOUR_WHEELER].data.push(Math.random() * shake_max)
+      }
       if (shakeChart) shakeChart.update()
     }, 100)
     heightChartInterval = setInterval(() => {
-      const newLabel: Number = distance.value.toFixed(2)
+      const newLabel: number = Number(distance.value.toFixed(2))
       heightData.labels.push(Number(newLabel))
-      heightData.datasets[0].data.push(Math.random() * height_max / 3)
-      heightData.datasets[1].data.push(Math.random() * height_max)
+      if (heightData.datasets[ID_SIX_WHEELER].data) {
+        heightData.datasets[ID_SIX_WHEELER].data.push(Math.random() * height_max / 3)
+      }
+      if (heightData.datasets[ID_FOUR_WHEELER].data) {
+        heightData.datasets[ID_FOUR_WHEELER].data.push(Math.random() * height_max)
+      }
       if (heightChart) heightChart.update()
     }, 100)
     roverPositionInterval = setInterval(() => {
