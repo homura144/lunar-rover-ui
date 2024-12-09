@@ -2,6 +2,11 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { spawn } from 'child_process'
+
+let imuSixProcess: any
+let imuFourProcess: any
+let motorProcess: any
 
 function createWindow(): void {
   // Create the browser window.
@@ -35,6 +40,16 @@ function createWindow(): void {
   }
 }
 
+function startPythonProcesses() {
+  imuSixProcess = spawn('python', ['src/python/imu_node.py', 'COM3', '0', '8767'])
+  console.log('IMU Six process started')
+
+  imuFourProcess = spawn('python', ['src/python/imu_node.py', 'COM4', '1', '8768'])
+  console.log('IMU Four process started')
+
+  motorProcess = spawn('python', ['src/python/motor_node.py'])
+  console.log('Motor process started')
+}
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -52,6 +67,7 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
+  startPythonProcesses()
   createWindow()
 
   app.on('activate', function () {
@@ -66,6 +82,9 @@ app.whenReady().then(() => {
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    if (imuSixProcess) imuSixProcess.kill()
+    if (imuFourProcess) imuFourProcess.kill()
+    if (motorProcess) motorProcess.kill()
     app.quit()
   }
 })
