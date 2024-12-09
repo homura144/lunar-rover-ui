@@ -20,6 +20,10 @@ let heightChart: Chart | null = null
 const ID_SIX_WHEELER = 0
 const ID_FOUR_WHEELER = 1
 
+const MOTOR_SOCKET_PORT = 8766
+const IMU_SOCKET_PORT_SIX = 8767
+const IMU_SOCKET_PORT_FOUR = 8768
+
 // Initial shake chart
 let shakeData = {
   labels: [] as number[],
@@ -66,53 +70,66 @@ let heightData = {
 }
 
 const isRunning = ref(false)
-let distanceInterval: ReturnType<typeof setInterval> | undefined
-let shakeChartInterval: ReturnType<typeof setInterval> | undefined
-let heightChartInterval: ReturnType<typeof setInterval> | undefined
-let roverPositionInterval: ReturnType<typeof setInterval> | undefined
+const latestIMUData = ref({
+  [ID_SIX_WHEELER]: { shake: 0, height: 0 },
+  [ID_FOUR_WHEELER]: { shake: 0, height: 0 }
+})
+
+const motorSocket = new WebSocket(`ws://localhost:${MOTOR_SOCKET_PORT}`)
+const imuSixSocket = new WebSocket(`ws://localhost:${IMU_SOCKET_PORT_SIX}`)
+const imuFourSocket = new WebSocket(`ws://localhost:${IMU_SOCKET_PORT_FOUR}`)
+
+motorSocket.onmessage = (event) => {
+  const data = JSON.parse(event.data)
+  if (data.type === 'distance') {
+    distance.value = data.value
+    updateCharts()
+    console.log(`Motor distance: ${data.value} m`)
+  }
+}
+
+const handleIMUMessage = (event: MessageEvent) => {
+  const data = JSON.parse(event.data)
+  if (data.type === 'imu') {
+    latestIMUData.value[data.vehicle_type] = {
+      shake: data.shake,
+      height: data.height
+    }
+    console.log(`IMU data: ${data.vehicle_type}, shake: ${data.shake}, height: ${data.height}`)
+  }
+}
+
+imuSixSocket.onmessage = handleIMUMessage
+imuFourSocket.onmessage = handleIMUMessage
+
+const updateCharts = () => {
+  const newLabel: number = Number(distance.value.toFixed(2))
+  shakeData.labels.push(newLabel)
+  heightData.labels.push(newLabel)
+
+  shakeData.datasets[ID_SIX_WHEELER].data.push(latestIMUData.value[ID_SIX_WHEELER].shake)
+  heightData.datasets[ID_SIX_WHEELER].data.push(latestIMUData.value[ID_SIX_WHEELER].height)
+
+  shakeData.datasets[ID_FOUR_WHEELER].data.push(latestIMUData.value[ID_FOUR_WHEELER].shake)
+  heightData.datasets[ID_FOUR_WHEELER].data.push(latestIMUData.value[ID_FOUR_WHEELER].height)
+
+  if (shakeChart) shakeChart.update()
+  if (heightChart) heightChart.update()
+
+  roverPosition.value = distance.value / distance_max * 100
+}
 
 const start = () => {
   if (!isRunning.value) {
     isRunning.value = true
-    distanceInterval = setInterval(() => {
-      distance.value += 0.01
-    }, 100)
-    shakeChartInterval = setInterval(() => {
-      const newLabel: number = Number(distance.value.toFixed(2))
-      shakeData.labels.push(Number(newLabel))
-
-      if (shakeData.datasets[ID_SIX_WHEELER].data) {
-        shakeData.datasets[ID_SIX_WHEELER].data.push(Math.random() * shake_max / 3)
-      }
-      if (shakeData.datasets[ID_FOUR_WHEELER].data) {
-        shakeData.datasets[ID_FOUR_WHEELER].data.push(Math.random() * shake_max)
-      }
-      if (shakeChart) shakeChart.update()
-    }, 100)
-    heightChartInterval = setInterval(() => {
-      const newLabel: number = Number(distance.value.toFixed(2))
-      heightData.labels.push(Number(newLabel))
-      if (heightData.datasets[ID_SIX_WHEELER].data) {
-        heightData.datasets[ID_SIX_WHEELER].data.push(Math.random() * height_max / 3)
-      }
-      if (heightData.datasets[ID_FOUR_WHEELER].data) {
-        heightData.datasets[ID_FOUR_WHEELER].data.push(Math.random() * height_max)
-      }
-      if (heightChart) heightChart.update()
-    }, 100)
-    roverPositionInterval = setInterval(() => {
-      roverPosition.value = distance.value / distance_max * 100
-    }, 100)
+    motorSocket.send(JSON.stringify({ command: 'resume' }))
   }
 }
 
 const pause = () => {
   if (isRunning.value) {
     isRunning.value = false
-    clearInterval(distanceInterval)
-    clearInterval(shakeChartInterval)
-    clearInterval(heightChartInterval)
-    clearInterval(roverPositionInterval)
+    motorSocket.send(JSON.stringify({ command: 'pause' }))
   }
 }
 
