@@ -49,7 +49,7 @@ function startPythonProcesses() {
 
   motorProcess = spawn('python', ['src/python/motor_node.py'])
   console.log('Motor process started')
-
+}
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
