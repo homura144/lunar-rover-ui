@@ -1,12 +1,37 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { spawn } from 'child_process'
+import {
+  MOTOR_SOCKET_PORT,
+  IMU_SOCKET_PORT_SIX,
+  IMU_SOCKET_PORT_FOUR,
+  HEIGHT_SOCKET_PORT_SIX,
+  HEIGHT_SOCKET_PORT_FOUR,
+  SERVER_ADDRESS,
+  SLEEP_DURATION,
+  DISTANCE_MAX,
+  PWM_FREQUENCY,
+  PWM_DUTY_CYCLE,
+  DIR_PIN,
+  PWM_PIN,
+  SPEED_FACTOR,
+  HEIGHT_FACTOR,
+  A_PIN_SIX,
+  B_PIN_SIX,
+  A_PIN_FOUR,
+  B_PIN_FOUR,
+  SERIAL_PORT_SIX,
+  SERIAL_PORT_FOUR,
+  BAUDRATE
+} from '../share/constants'
 
 let imuSixProcess: any
 let imuFourProcess: any
 let motorProcess: any
+let heightSixProcess: any
+let heightFourProcess: any
 
 function createWindow(): void {
   // Create the browser window.
@@ -41,15 +66,94 @@ function createWindow(): void {
 }
 
 function startPythonProcesses() {
-  imuSixProcess = spawn('python', ['src/python/imu_node.py', 'COM3', '0', '8767'])
+  imuSixProcess = spawn('python', [
+    'src/python/imu_node.py',
+    '--server_address',
+    SERVER_ADDRESS,
+    '--server_port',
+    IMU_SOCKET_PORT_SIX.toString(),
+    '--serial_port',
+    SERIAL_PORT_SIX,
+    '--baudrate',
+    BAUDRATE.toString(),
+    '--sleep_duration',
+    SLEEP_DURATION
+  ])
   console.log('IMU Six process started')
 
-  imuFourProcess = spawn('python', ['src/python/imu_node.py', 'COM4', '1', '8768'])
+  imuFourProcess = spawn('python', [
+    'src/python/imu_node.py',
+    '--server_address',
+    SERVER_ADDRESS,
+    '--server_port',
+    IMU_SOCKET_PORT_FOUR.toString(),
+    '--serial_port',
+    SERIAL_PORT_FOUR,
+    '--baudrate',
+    BAUDRATE.toString(),
+    '--sleep_duration',
+    SLEEP_DURATION
+  ])
   console.log('IMU Four process started')
 
-  motorProcess = spawn('python', ['src/python/motor_node.py'])
+  motorProcess = spawn('python', [
+    'src/python/motor_node.py',
+    '--server_address',
+    SERVER_ADDRESS,
+    '--server_port',
+    MOTOR_SOCKET_PORT.toString(),
+    '--distance_max',
+    DISTANCE_MAX,
+    '--pwm_frequency',
+    PWM_FREQUENCY,
+    '--pwm_duty_cycle',
+    PWM_DUTY_CYCLE,
+    '--dir_pin',
+    DIR_PIN,
+    '--pwm_pin',
+    PWM_PIN,
+    '--speed_factor',
+    SPEED_FACTOR,
+    '--sleep_duration',
+    SLEEP_DURATION
+  ])
   console.log('Motor process started')
+
+  heightSixProcess = spawn('python', [
+    'src/python/height_node.py',
+    '--server_address',
+    SERVER_ADDRESS,
+    '--server_port',
+    HEIGHT_SOCKET_PORT_SIX.toString(),
+    '--A',
+    A_PIN_SIX,
+    '--B',
+    B_PIN_SIX,
+    '--sleep_duration',
+    SLEEP_DURATION,
+    '--height_factor',
+    HEIGHT_FACTOR
+  ])
+  console.log('Height Six process started')
+
+  heightFourProcess = spawn('python', [
+    'src/python/height_node.py',
+    '--server_address',
+    SERVER_ADDRESS,
+    '--server_port',
+    HEIGHT_SOCKET_PORT_FOUR.toString(),
+    '--A',
+    A_PIN_FOUR,
+    '--B',
+    B_PIN_FOUR,
+    '--sleep_duration',
+    SLEEP_DURATION,
+    '--height_factor',
+    HEIGHT_FACTOR
+  ])
+  console.log('Height Four process started')
 }
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -64,8 +168,7 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  // startPythonProcesses()
 
   startPythonProcesses()
   createWindow()
@@ -85,6 +188,8 @@ app.on('window-all-closed', () => {
     if (imuSixProcess) imuSixProcess.kill()
     if (imuFourProcess) imuFourProcess.kill()
     if (motorProcess) motorProcess.kill()
+    if (heightSixProcess) heightSixProcess.kill()
+    if (heightFourProcess) heightFourProcess.kill()
     app.quit()
   }
 })
