@@ -1,0 +1,4 @@
+lgpio
+gpiozero==2.0.1
+pyserial==3.5
+websockets==10.4
